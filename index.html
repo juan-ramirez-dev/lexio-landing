@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lexio — learn English from what you already read</title>
+    <meta
+      name="description"
+      content="Paste a reading or a meeting transcript. Lexio finds the phrasal verbs, idioms and expressions in it and turns them into lessons and exercises. Free and open source for macOS and Windows."
+    />
+    <meta name="theme-color" content="#f7f5ff" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Lexio — learn English from what you already read" />
+    <meta
+      property="og:description"
+      content="Phrasal verbs, idioms and expressions from your own texts, turned into lessons and exercises. Free, open source, on your computer."
+    />
+    <meta property="og:url" content="https://juan-ramirez-dev.github.io/lexio-landing/" />
+    <meta property="og:image" content="https://juan-ramirez-dev.github.io/lexio-landing/assets/icon.png" />
+    <meta name="twitter:card" content="summary" />
+
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/icon.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap"
+    />
+    <!-- Same tokens as the app (random-english-terms/src/app/globals.css). The only place with literal colors. -->
+    <style>
+      :root {
+        color-scheme: light;
+        --color-bg: #f7f5ff;
+        --color-surface: #ffffff;
+        --color-surface-2: #efecfb;
+        --color-field: #f1eefc;
+        --color-border: #e3def5;
+        --color-track: #e6e1f7;
+        --color-text: #1d1838;
+        --color-text-muted: #6b6590;
+        --color-text-inverse: #ffffff;
+        --color-ink: #1d1838;
+        --color-primary: #6a4cff;
+        --color-primary-hover: #5636e8;
+        --color-primary-soft: rgb(106 76 255 / 0.12);
+        --color-accent: #ff6b9a;
+        --color-accent-soft: rgb(255 107 154 / 0.14);
+        --color-known: #12b886;
+        --color-known-soft: rgb(18 184 134 / 0.14);
+        --color-learning: #ff9f1c;
+        --color-learning-soft: rgb(255 159 28 / 0.16);
+        --color-danger: #f04a5f;
+        --color-danger-soft: rgb(240 74 95 / 0.12);
+        --color-type-phrasal: #6a4cff;
+        --color-type-phrasal-soft: rgb(106 76 255 / 0.12);
+        --color-type-idiom: #ff6b9a;
+        --color-type-idiom-soft: rgb(255 107 154 / 0.14);
+        --color-type-collocation: #0ea5c6;
+        --color-type-collocation-soft: rgb(14 165 198 / 0.14);
+        --color-type-expression: #ff9f1c;
+        --color-type-expression-soft: rgb(255 159 28 / 0.16);
+        /* The app icon (src-tauri/icons/source.svg). */
+        --color-night: #15295c;
+        --color-current: #5b8dd9;
+        --color-star: #f2c14e;
+        --color-star-glow: rgb(242 193 78 / 0.28);
+        --color-starlight: #eef2ff;
+        --shadow-sm: 0 1px 2px rgb(60 40 160 / 0.08), 0 4px 12px rgb(60 40 160 / 0.08);
+        --shadow-md: 0 2px 4px rgb(60 40 160 / 0.08), 0 12px 28px rgb(60 40 160 / 0.14);
+        --shadow-lg: 0 4px 8px rgb(60 40 160 / 0.1), 0 24px 48px rgb(60 40 160 / 0.2);
+        --shadow-glow: 0 8px 24px rgb(106 76 255 / 0.35);
+      }
+    </style>
+    <!-- Without JS everything shows, in English. With JS the sections slide in on scroll,
+         and a visitor who reads Spanish gets it before the first paint (see i18n.js). -->
+    <script>
+      document.documentElement.classList.add('js')
+      ;(() => {
+        const supported = l => l === 'en' || l === 'es'
+        let lang = new URLSearchParams(location.search).get('lang')
+        try {
+          if (!supported(lang)) lang = localStorage.getItem('lexio-lang')
+        } catch {}
+        if (!supported(lang)) {
+          const tag = (navigator.languages ?? [navigator.language]).find(l =>
+            supported(String(l).toLowerCase().split('-')[0]),
+          )
+          lang = tag ? String(tag).toLowerCase().split('-')[0] : 'en'
+        }
+        if (lang === 'en') return
+        document.documentElement.classList.add('i18n-wait')
+        setTimeout(() => document.documentElement.classList.remove('i18n-wait'), 1500)
+      })()
+    </script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="blobs" aria-hidden="true">
+      <span class="blob blob-a"></span>
+      <span class="blob blob-b"></span>
+      <span class="blob blob-c"></span>
+    </div>
+
+    <header class="top">
+      <a class="wordmark" href="#" aria-label="Lexio, home" data-i18n-attr="aria-label:top.home">
+        <svg class="mark" viewBox="0 0 1024 1024" aria-hidden="true"><rect class="mark-tile" width="1024" height="1024" rx="228" /><circle class="mark-glow" cx="512" cy="450" r="300" /><path class="mark-current" stroke-width="18" d="M150 720 C 300 640, 420 760, 560 700 S 820 640, 900 720" /><path class="mark-current" stroke-width="18" d="M150 800 C 320 740, 440 840, 600 790 S 840 740, 900 800" /><path class="mark-star" d="M512 196 l58 128 140 18 -104 94 27 142 -121 -70 -121 70 27 -142 -104 -94 140 -18 z" /><circle class="mark-star" cx="246" cy="300" r="20" /><circle class="mark-light" cx="792" cy="330" r="14" /><circle class="mark-light" cx="360" cy="520" r="10" /></svg>Lexio<span class="dot">.</span>
+      </a>
+      <nav class="top-nav">
+        <a class="top-link" href="#how" data-i18n="top.how">How it works</a>
+        <a class="top-link" href="#contribute" data-i18n="top.contribute">Contribute</a>
+        <a class="top-link" href="https://github.com/juan-ramirez-dev/random-english-terms" data-i18n="top.code">Code</a>
+        <div class="lang" role="group" aria-label="Language" data-i18n-attr="aria-label:top.language">
+          <button class="lang-option" type="button" data-lang="en" lang="en" aria-label="English" aria-pressed="true">EN</button>
+          <button class="lang-option" type="button" data-lang="es" lang="es" aria-label="Español" aria-pressed="false">ES</button>
+        </div>
+        <a class="pill" href="#download" data-i18n="top.download">Download</a>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Hero -->
+      <section class="hero">
+        <div class="hero-copy">
+          <a class="badge rise" style="--i: 0" href="#contribute"><i class="pulse" aria-hidden="true"></i><span data-i18n="hero.badge">Free and open source</span></a>
+          <h1>
+            <span class="rise" style="--i: 1" data-i18n="hero.line1">Learn the English</span>
+            <span class="rise" style="--i: 2" data-i18n="hero.line2">you already read,</span>
+            <span class="rise" style="--i: 3"><mark data-i18n="hero.line3">one phrase</mark></span>
+            <span class="rise" style="--i: 4"><mark data-i18n="hero.line4">at a time.</mark></span>
+          </h1>
+          <p class="lead rise" style="--i: 5" data-i18n="hero.lead">
+            Paste a reading or a meeting transcript. Lexio finds the phrasal verbs, idioms and expressions in it and
+            turns the ones you pick into lessons and exercises. Free for macOS and Windows. Everything stays on your
+            computer.
+          </p>
+
+          <div class="download rise" style="--i: 6" id="download">
+            <a class="button" id="primary" href="https://github.com/juan-ramirez-dev/random-english-terms/releases/latest/download/Lexio-macos.dmg">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
+              <span id="primary-label">Download for macOS</span>
+            </a>
+            <a class="alt" id="secondary" href="https://github.com/juan-ramirez-dev/random-english-terms/releases/latest/download/Lexio-windows-setup.exe">
+              On Windows? Download here
+            </a>
+            <p class="note" id="other" hidden data-i18n="download.elsewhere">
+              Lexio is for macOS and Windows. Download it from your computer.
+            </p>
+          </div>
+        </div>
+
+        <!-- Live swipe mock. Decorative: the phrases are examples. -->
+        <div class="stage rise" style="--i: 3" aria-hidden="true">
+          <div class="app" id="app">
+            <div class="app-bar"><i></i><i></i><i></i></div>
+            <div class="app-top">
+              <span class="app-word">Lexio<b>.</b></span>
+              <span class="app-nav">
+                <span class="nav-pill"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 9.5V20h12V9.5" /></svg><span data-i18n="app.today">Today</span></span>
+                <span class="nav-pill"><svg viewBox="0 0 24 24"><path d="M13 3L5 13.5h6L10 21l9-11h-6.5z" /></svg><span data-i18n="app.practice">Practice</span></span>
+                <span class="nav-pill is-active"><svg viewBox="0 0 24 24"><path d="M4 6a2 2 0 0 1 2-2h5v15H6a2 2 0 0 0-2 2zM20 6a2 2 0 0 0-2-2h-5v15h5a2 2 0 0 1 2 2z" /></svg><span data-i18n="app.material">Material</span></span>
+              </span>
+              <span class="streak"><svg viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.5 1 2 1.8 2C10.5 8.5 11 5.5 12 3z" /></svg>4</span>
+            </div>
+
+            <div class="app-main">
+              <p class="swipe-step" id="hero-step">3 of 12</p>
+              <div class="deck" id="hero-deck">
+                <div class="swipe-card" data-depth="0">
+                  <span class="type" data-type="phrasal" data-i18n="type.phrasal">Phrasal verb</span>
+                  <span class="phrase">come up with</span>
+                  <p class="sentence">She came up with a better plan for the launch.</p>
+                </div>
+                <div class="swipe-card" data-depth="1">
+                  <span class="type" data-type="idiom" data-i18n="type.idiom">Idiom</span>
+                  <span class="phrase">bite the bullet</span>
+                  <p class="sentence">We had to bite the bullet and rewrite the tests.</p>
+                </div>
+                <div class="swipe-card" data-depth="2">
+                  <span class="type" data-type="collocation" data-i18n="type.collocation">Collocation</span>
+                  <span class="phrase">take into account</span>
+                  <p class="sentence">Take the time zones into account when you plan the call.</p>
+                </div>
+                <div class="swipe-card" data-depth="3">
+                  <span class="type" data-type="expression" data-i18n="type.expression">Expression</span>
+                  <span class="phrase">by the way</span>
+                  <p class="sentence">By the way, the demo moved to Thursday.</p>
+                </div>
+                <div class="swipe-card" data-depth="3">
+                  <span class="type" data-type="phrasal" data-i18n="type.phrasal">Phrasal verb</span>
+                  <span class="phrase">touch base</span>
+                  <p class="sentence">Let's touch base after the release.</p>
+                </div>
+              </div>
+              <div class="choices">
+                <span class="choice choice-known" id="hero-known"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg><span data-i18n="swipe.known">I know it</span></span>
+                <span class="choice-skip" data-i18n="swipe.skip">Skip</span>
+                <span class="choice choice-learn" id="hero-learn"><span data-i18n="swipe.learn">Learn it</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></svg></span>
+              </div>
+              <p class="keys" data-i18n="swipe.keys">← know · → learn · ↑ skip</p>
+            </div>
+          </div>
+
+          <div class="toast" id="toast">
+            <span class="toast-avatar" id="toast-avatar">
+              <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></svg>
+            </span>
+            <span class="toast-text"><b id="toast-title">come up with</b><small id="toast-kind">Added to learn</small></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- How it works -->
+      <section class="section" id="how">
+        <header class="section-head" data-reveal>
+          <p class="eyebrow" data-i18n="how.eyebrow">How it works</p>
+          <h2 data-i18n-html="how.title">Your texts in. <span class="muted">Real English out.</span></h2>
+          <p class="lead" data-i18n="how.lead">
+            Not a word list someone else picked. The phrases come from what you read and hear at work.
+          </p>
+        </header>
+
+        <div class="demo" id="demo" data-reveal style="--i: 1">
+          <div class="chapters" id="chapters">
+            <button class="chapter" type="button" data-chapter="0">
+              <i class="chapter-bar"><b></b></i>
+              <span class="chapter-n">1</span>
+              <strong data-i18n="how.step1">Paste</strong>
+              <small data-i18n="how.step1Text">Paste a reading or a meeting transcript, or import a .txt file.</small>
+            </button>
+            <button class="chapter" type="button" data-chapter="1">
+              <i class="chapter-bar"><b></b></i>
+              <span class="chapter-n">2</span>
+              <strong data-i18n="how.step2">Lexio finds the phrases</strong>
+              <small data-i18n="how.step2Text">Phrasal verbs, idioms, collocations and expressions, highlighted in your own text.</small>
+            </button>
+            <button class="chapter" type="button" data-chapter="2">
+              <i class="chapter-bar"><b></b></i>
+              <span class="chapter-n">3</span>
+              <strong data-i18n="how.step3">Swipe</strong>
+              <small data-i18n="how.step3Text">Left if you know it, right if you want to learn it. With the arrow keys or the buttons.</small>
+            </button>
+            <button class="chapter" type="button" data-chapter="3">
+              <i class="chapter-bar"><b></b></i>
+              <span class="chapter-n">4</span>
+              <strong data-i18n="how.step4">Practice</strong>
+              <small data-i18n="how.step4Text">Your AI writes a short lesson and exercises for each phrase. Then you keep your streak going.</small>
+            </button>
+          </div>
+
+          <div class="demo-stage">
+            <!-- Decorative: the steps on the left tell the same story in text. -->
+            <div class="screen" id="screen" data-scene="material" aria-hidden="true">
+              <div class="app-bar"><i></i><i></i><i></i></div>
+              <div class="app-top">
+                <span class="app-word">Lexio<b>.</b></span>
+                <span class="app-nav">
+                  <span class="nav-pill"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 9.5V20h12V9.5" /></svg><span data-i18n="app.today">Today</span></span>
+                  <span class="nav-pill" id="s-nav-practice"><svg viewBox="0 0 24 24"><path d="M13 3L5 13.5h6L10 21l9-11h-6.5z" /></svg><span data-i18n="app.practice">Practice</span></span>
+                  <span class="nav-pill is-active" id="s-nav-material"><svg viewBox="0 0 24 24"><path d="M4 6a2 2 0 0 1 2-2h5v15H6a2 2 0 0 0-2 2zM20 6a2 2 0 0 0-2-2h-5v15h5a2 2 0 0 1 2 2z" /></svg><span data-i18n="app.material">Material</span></span>
+                  <span class="nav-pill"><svg viewBox="0 0 24 24"><path d="M5 20V12M12 20V5M19 20v-5" /></svg><span data-i18n="app.progress">Progress</span></span>
+                </span>
+                <span class="streak" id="s-streak-pill"><svg viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.5 1 2 1.8 2C10.5 8.5 11 5.5 12 3z" /></svg><span id="s-streak">4</span></span>
+              </div>
+
+              <div class="scenes">
+                <!-- 1. Add a text -->
+                <section class="scene scene-add">
+                  <div>
+                    <p class="scene-title" data-i18n="add.title">Add a text</p>
+                    <p class="scene-sub" data-i18n="add.subtitle">Paste it, or import a .txt file.</p>
+                  </div>
+                  <span class="field"><small data-i18n="add.titleLabel">Title</small><span class="input" id="s-title"></span></span>
+                  <span class="field"><small data-i18n="add.textLabel">Text</small><span class="input input-area" id="s-text"></span></span>
+                  <span class="s-actions">
+                    <span class="s-btn" id="s-save">Save and extract</span>
+                    <span class="s-ghost" data-i18n="add.import">Import .txt</span>
+                  </span>
+                </section>
+
+                <!-- 2. The phrases inside it -->
+                <section class="scene scene-material">
+                  <div class="scene-head">
+                    <div>
+                      <p class="scene-title" data-i18n="demo.textTitle">Team sync — March 3</p>
+                      <p class="scene-sub" data-i18n="material.found">5 expressions</p>
+                    </div>
+                    <span class="s-btn" id="s-pick" data-i18n="material.pick">Pick what to learn</span>
+                  </div>
+                  <p class="reading" id="s-reading"></p>
+                  <div class="legend">
+                    <span class="type" data-type="phrasal" data-i18n="type.phrasal">Phrasal verb</span>
+                    <span class="type" data-type="idiom" data-i18n="type.idiom">Idiom</span>
+                    <span class="type" data-type="collocation" data-i18n="type.collocation">Collocation</span>
+                    <span class="type" data-type="expression" data-i18n="type.expression">Expression</span>
+                  </div>
+                </section>
+
+                <!-- 3. Swipe -->
+                <section class="scene scene-swipe">
+                  <p class="swipe-step" id="s-step">1 of 5</p>
+                  <div class="deck">
+                    <div class="swipe-card s-card">
+                      <span class="type" data-type="phrasal" data-i18n="type.phrasal">Phrasal verb</span>
+                      <span class="phrase">figure out</span>
+                      <p class="sentence">We still need to figure out the budget.</p>
+                    </div>
+                    <div class="swipe-card s-card">
+                      <span class="type" data-type="idiom" data-i18n="type.idiom">Idiom</span>
+                      <span class="phrase">on the same page</span>
+                      <p class="sentence">Let's make sure we're on the same page.</p>
+                    </div>
+                    <div class="swipe-card s-card">
+                      <span class="type" data-type="collocation" data-i18n="type.collocation">Collocation</span>
+                      <span class="phrase">make a decision</span>
+                      <p class="sentence">Design will make a decision by Friday.</p>
+                    </div>
+                    <div class="swipe-card s-card">
+                      <span class="type" data-type="expression" data-i18n="type.expression">Expression</span>
+                      <span class="phrase">as far as I know</span>
+                      <p class="sentence">As far as I know, design will decide.</p>
+                    </div>
+                  </div>
+                  <div class="choices">
+                    <span class="choice choice-known" id="s-known"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg><span data-i18n="swipe.known">I know it</span></span>
+                    <span class="choice-skip" data-i18n="swipe.skip">Skip</span>
+                    <span class="choice choice-learn" id="s-learn"><span data-i18n="swipe.learn">Learn it</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></svg></span>
+                  </div>
+                </section>
+
+                <!-- 4. Lesson, then an exercise -->
+                <section class="scene scene-practice">
+                  <div class="lesson">
+                    <p class="kicker" data-i18n="lesson.title">New phrase</p>
+                    <div class="lesson-top">
+                      <span class="lesson-phrase">figure out</span>
+                      <span class="type" data-type="phrasal" data-i18n="type.phrasal">Phrasal verb</span>
+                    </div>
+                    <p class="lesson-meaning">To understand or solve something by thinking about it.</p>
+                    <div class="lesson-grid">
+                      <div>
+                        <p class="lesson-label" data-i18n="lesson.translation">In Spanish</p>
+                        <p>averiguar, resolver</p>
+                      </div>
+                      <div>
+                        <p class="lesson-label" data-i18n="lesson.examples">Examples</p>
+                        <p>“I can't figure out why the build fails.”</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p class="lesson-label" data-i18n="lesson.dialog">In a conversation</p>
+                      <div class="dialog">
+                        <p>A: Did you fix the login bug?</p>
+                        <p>B: Not yet. I'm still trying to figure it out.</p>
+                      </div>
+                    </div>
+                    <span class="s-btn" id="s-start" data-i18n="lesson.start">Got it, let’s practice</span>
+                  </div>
+
+                  <div class="exercise">
+                    <p class="kicker"><span data-i18n="exercise.context">Which one fits?</span><small data-i18n="exercise.step">1 of 6</small></p>
+                    <p class="ex-sentence">Can you help me <span class="gap" id="s-gap">______</span> why the build fails?</p>
+                    <ul class="options">
+                      <li id="s-option">figure out</li>
+                      <li>wrap up</li>
+                      <li>make a decision</li>
+                    </ul>
+                    <p class="feedback">
+                      <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                      <span data-i18n="exercise.correct">Correct!</span>
+                    </p>
+                  </div>
+                </section>
+              </div>
+
+              <span class="cursor" id="s-cursor"></span>
+            </div>
+
+            <button class="demo-play" id="demo-play" type="button" aria-label="Pause demo" hidden>
+              <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12" /></svg>
+              <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z" /></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Which AI to use -->
+      <section class="section" id="your-ai">
+        <header class="section-head" data-reveal>
+          <p class="eyebrow" data-i18n="ai.eyebrow">Your AI, your choice</p>
+          <h2 data-i18n-html="ai.title">Private on your computer, <span class="muted">with your key or free with Claude.</span></h2>
+          <p class="lead" data-i18n="ai.lead">
+            The AI writes the meaning, examples and exercises for each phrase. You pick which one in Settings.
+          </p>
+        </header>
+
+        <div class="cards">
+          <article class="card" data-reveal style="--i: 0">
+            <div class="card-art model-art" aria-hidden="true">
+              <span class="model-card">
+                <span class="model-name"><b>Qwen 2.5 3B</b><small data-i18n="ai.recommended">Recommended</small></span>
+                <i class="bar"><b class="known" style="--v: 100%"></b></i>
+                <small class="model-done" data-i18n="ai.downloaded">Downloaded · 2.1 GB</small>
+              </span>
+              <span class="vault-file" data-i18n="ai.offline">Offline</span>
+            </div>
+            <h3 data-i18n="ai.localTitle">AI on your computer</h3>
+            <p data-i18n="ai.localText">100% private: nothing leaves your computer. It downloads once and works offline.</p>
+          </article>
+
+          <article class="card" data-reveal style="--i: 1">
+            <div class="card-art keys-art" aria-hidden="true">
+              <span class="chip" style="--i: 0">OpenAI</span>
+              <span class="chip chip-primary" style="--i: 1">Claude</span>
+              <span class="chip" style="--i: 2">Gemini</span>
+              <span class="key-pill">
+                <svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4" /><path d="M11 12l9-9M16 7l3 3" /></svg>
+                <span data-i18n="ai.keychain">In your system keychain</span>
+              </span>
+            </div>
+            <h3 data-i18n="ai.keyTitle">Or with your key</h3>
+            <p data-i18n="ai.keyText">
+              Paste your OpenAI, Claude or Gemini key. It's stored in the system keychain, never in Lexio. Only the
+              phrases go to the provider.
+            </p>
+          </article>
+
+          <article class="card" data-reveal style="--i: 2">
+            <div class="card-art prompt-art" aria-hidden="true">
+              <span class="chip" style="--i: 0">
+                <svg viewBox="0 0 24 24"><path d="M8 8h11v12H8zM5 16V4h11" /></svg>
+                <span data-i18n="ai.copy">Copy prompt</span>
+              </span>
+              <span class="op" style="--i: 1">↓</span>
+              <span class="chip chip-primary" style="--i: 2">Claude</span>
+              <span class="op" style="--i: 3">↓</span>
+              <span class="chip chip-ink" style="--i: 4" data-i18n="ai.paste">Paste the answer</span>
+            </div>
+            <h3 data-i18n="ai.claudeTitle">Or copy and paste</h3>
+            <p data-i18n="ai.claudeText">No key and no download: copy the prompt, paste it into Claude and paste its answer back.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- What it does -->
+      <section class="section">
+        <header class="section-head" data-reveal>
+          <p class="eyebrow" data-i18n="what.eyebrow">What it does</p>
+          <h2 data-i18n-html="what.title">The English people really use, <span class="muted">from your own texts.</span></h2>
+        </header>
+
+        <div class="cards">
+          <article class="card" data-reveal style="--i: 0">
+            <div class="card-art text-art" aria-hidden="true">
+              <p>We need to <mark data-type="phrasal" style="--i: 0">figure out</mark> the plan before we <mark data-type="idiom" style="--i: 1">call it a day</mark>, so let's <mark data-type="collocation" style="--i: 2">make a decision</mark>.</p>
+            </div>
+            <h3 data-i18n="what.textsTitle">Your texts, your phrases</h3>
+            <p data-i18n="what.textsText">Readings, articles or meeting transcripts. A built-in list of about 1,800 phrases finds them, even without AI.</p>
+          </article>
+
+          <article class="card" data-reveal style="--i: 1">
+            <div class="card-art kinds" aria-hidden="true">
+              <span class="chip" style="--i: 0" data-i18n="kinds.meaning">What does it mean?</span>
+              <span class="chip chip-primary" style="--i: 1" data-i18n="kinds.gap">Fill the gap</span>
+              <span class="chip" style="--i: 2" data-i18n="kinds.context">Which one fits?</span>
+              <span class="chip chip-known" style="--i: 3" data-i18n="kinds.match">Match the pairs</span>
+              <span class="chip" style="--i: 4" data-i18n="kinds.order">Put the words in order</span>
+              <span class="chip chip-learn" style="--i: 5" data-i18n="kinds.usage">Which one uses it right?</span>
+            </div>
+            <h3 data-i18n="what.practiceTitle">A lesson, then practice</h3>
+            <p data-i18n="what.practiceText">Meaning, when to use it, examples and a short dialog. Then six kinds of exercises so it sticks.</p>
+          </article>
+
+          <article class="card" data-reveal style="--i: 2" id="privacy">
+            <div class="card-art vault" aria-hidden="true">
+              <span class="vault-ring"></span>
+              <span class="vault-ring vault-ring-2"></span>
+              <span class="vault-core">
+                <svg viewBox="0 0 24 24"><path d="M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3" /></svg>
+              </span>
+              <span class="vault-file" data-i18n="what.file">lexio.db · on your computer</span>
+            </div>
+            <h3 data-i18n="what.privateTitle">Private by design</h3>
+            <p data-i18n="what.privateText">No account and no server. Your texts and progress are one file on your computer.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- Progress -->
+      <section class="section split">
+        <div class="split-copy" data-reveal>
+          <p class="eyebrow" data-i18n="progress.eyebrow">Your progress</p>
+          <h2 data-i18n-html="progress.title">From new to mastered, <span class="muted">one session at a time.</span></h2>
+          <p class="lead" data-i18n="progress.lead">
+            Every phrase has a level. Each practice session moves it up. A daily streak keeps you coming back.
+          </p>
+          <button class="toggle" id="round" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 13.5h6L10 21l9-11h-6.5z" /></svg>
+            <span data-i18n="progress.round">Practice a round</span>
+          </button>
+        </div>
+
+        <div class="board" id="board" data-reveal style="--i: 1" aria-hidden="true">
+          <div class="lane" data-level="new">
+            <p class="lane-head"><span data-i18n="mastery.new">New</span><b>3</b></p>
+            <ul></ul>
+          </div>
+          <div class="lane" data-level="learning">
+            <p class="lane-head"><span data-i18n="mastery.learning">Learning</span><b>2</b></p>
+            <ul></ul>
+          </div>
+          <div class="lane" data-level="mastered">
+            <p class="lane-head"><span data-i18n="mastery.mastered">Mastered</span><b>1</b></p>
+            <ul></ul>
+          </div>
+          <p class="board-streak">
+            <svg viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.5 1 2 1.8 2C10.5 8.5 11 5.5 12 3z" /></svg>
+            <span id="board-streak">4 day streak</span>
+          </p>
+        </div>
+      </section>
+
+      <!-- Open source -->
+      <section class="section" id="contribute">
+        <header class="section-head" data-reveal>
+          <p class="eyebrow" data-i18n="code.eyebrow">Open source · MIT</p>
+          <h2 data-i18n-html="code.title">Built in the open. <span class="muted">Build it with us.</span></h2>
+          <p class="lead" data-i18n="code.lead">
+            Lexio is free and every line is on GitHub. Fix a bug, add phrases, improve a translation or build the next
+            feature. Download it, use it, and send your changes.
+          </p>
+        </header>
+
+        <div class="cards">
+          <article class="card" data-reveal style="--i: 0">
+            <div class="card-art fork-art" aria-hidden="true">
+              <span class="repo">
+                <svg class="github" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" /></svg>
+                random-english-terms
+              </span>
+              <span class="chip chip-primary fork-chip">
+                <svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2" /><circle cx="18" cy="5" r="2" /><circle cx="12" cy="19" r="2" /><path d="M6 7v2a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V7M12 12v5" /></svg>
+                Fork
+              </span>
+            </div>
+            <h3 data-i18n="code.forkTitle">1. Fork it</h3>
+            <p data-i18n="code.forkText">Make your own copy on GitHub and clone it.</p>
+          </article>
+
+          <article class="card" data-reveal style="--i: 1">
+            <div class="card-art term-art" aria-hidden="true">
+              <code class="term">
+                <span style="--i: 0"><i>$</i> pnpm install</span>
+                <span style="--i: 1"><i>$</i> pnpm desktop</span>
+                <span class="term-ok" style="--i: 2" data-i18n="code.running">✓ Lexio is running</span>
+              </code>
+            </div>
+            <h3 data-i18n="code.runTitle">2. Run it</h3>
+            <p data-i18n="code.runText">Node 20, pnpm and Rust. The app opens with live reload.</p>
+          </article>
+
+          <article class="card" data-reveal style="--i: 2">
+            <div class="card-art bills" aria-hidden="true">
+              <span class="bill bill-title" style="--i: 0">feat: more idioms</span>
+              <span class="bill" style="--i: 1"><i class="check"></i>pnpm check</span>
+              <span class="bill" style="--i: 2"><i class="check"></i>macOS + Windows build</span>
+            </div>
+            <h3 data-i18n="code.prTitle">3. Open a PR</h3>
+            <p data-i18n="code.prText">Branch from main, run pnpm check and open the PR. CI builds both apps for you.</p>
+          </article>
+        </div>
+
+        <div class="ideas" data-reveal style="--i: 1">
+          <p class="ideas-title" data-i18n="code.ideas">Good first contributions</p>
+          <span class="chip" data-i18n="code.idea1">Add phrases to the built-in list</span>
+          <span class="chip" data-i18n="code.idea2">New kinds of exercises</span>
+          <span class="chip" data-i18n="code.idea3">Improve a translation</span>
+          <span class="chip" data-i18n="code.idea4">Report a bug</span>
+        </div>
+
+        <div class="code-actions" data-reveal style="--i: 2">
+          <a class="button" href="https://github.com/juan-ramirez-dev/random-english-terms">
+            <svg class="github" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" /></svg>
+            <span data-i18n="code.repo">See the code on GitHub</span>
+          </a>
+          <a class="alt" href="https://github.com/juan-ramirez-dev/random-english-terms/blob/main/contributing.md" data-i18n="code.guide">How to contribute</a>
+          <a class="alt" href="https://github.com/juan-ramirez-dev/random-english-terms/issues" data-i18n="code.issues">Ideas and bugs</a>
+        </div>
+      </section>
+
+      <!-- First launch -->
+      <section class="section" id="first-launch">
+        <header class="section-head" data-reveal>
+          <p class="eyebrow" data-i18n="first.eyebrow">The first time you open it</p>
+          <h2 data-i18n-html="first.title">Your system will warn you. <span class="muted">That’s normal.</span></h2>
+          <p class="lead" data-i18n="first.lead">
+            Lexio is open source and doesn't pay for Apple or Microsoft certificates. So your system asks you to
+            confirm once.
+          </p>
+        </header>
+
+        <div class="steps">
+          <article class="card" data-reveal style="--i: 0">
+            <h3 class="os-tag">macOS</h3>
+            <ol>
+              <li data-i18n-html="first.mac1">Open the <code>.dmg</code> and drag Lexio to Applications.</li>
+              <li data-i18n-html="first.mac2">Open it. A warning shows up: click <strong>Done</strong>.</li>
+              <li data-i18n-html="first.mac3">System Settings → Privacy &amp; Security → <strong>Open Anyway</strong>.</li>
+            </ol>
+            <details>
+              <summary data-i18n="first.technical">If you’re technical</summary>
+              <pre><code>xattr -dr com.apple.quarantine /Applications/Lexio.app</code></pre>
+            </details>
+          </article>
+          <article class="card" data-reveal style="--i: 1">
+            <h3 class="os-tag">Windows</h3>
+            <ol>
+              <li data-i18n="first.win1">Open the installer.</li>
+              <li data-i18n-html="first.win2">“Windows protected your PC” shows up: click <strong>More info</strong>.</li>
+              <li data-i18n-html="first.win3">Click <strong>Run anyway</strong>.</li>
+            </ol>
+          </article>
+        </div>
+        <p class="note note-center" data-reveal data-i18n-html="first.note">
+          <i class="pulse" aria-hidden="true"></i>After that it updates itself.
+        </p>
+      </section>
+
+      <!-- Closing -->
+      <section class="cta" data-reveal>
+        <svg class="mark mark-lg" viewBox="0 0 1024 1024" aria-hidden="true"><rect class="mark-tile" width="1024" height="1024" rx="228" /><circle class="mark-glow" cx="512" cy="450" r="300" /><path class="mark-current" stroke-width="18" d="M150 720 C 300 640, 420 760, 560 700 S 820 640, 900 720" /><path class="mark-current" stroke-width="18" d="M150 800 C 320 740, 440 840, 600 790 S 840 740, 900 800" /><path class="mark-star" d="M512 196 l58 128 140 18 -104 94 27 142 -121 -70 -121 70 27 -142 -104 -94 140 -18 z" /><circle class="mark-star" cx="246" cy="300" r="20" /><circle class="mark-light" cx="792" cy="330" r="14" /><circle class="mark-light" cx="360" cy="520" r="10" /></svg>
+        <h2 data-i18n-html="cta.title">Your English, from your own texts. <span class="muted">Free and open source.</span></h2>
+        <div class="cta-actions">
+          <a class="button" href="#download" data-i18n="cta.download">Download Lexio</a>
+          <a class="alt" href="#contribute" data-i18n="cta.contribute">or help build it</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span>Lexio · MIT</span>
+      <a href="https://github.com/juan-ramirez-dev/random-english-terms">github.com/juan-ramirez-dev/random-english-terms</a>
+    </footer>
+
+    <script src="i18n.js"></script>
+    <script src="main.js"></script>
+  </body>
+</html>
